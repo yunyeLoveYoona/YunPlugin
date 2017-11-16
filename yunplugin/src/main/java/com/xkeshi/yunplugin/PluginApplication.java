@@ -14,7 +14,11 @@ public abstract class PluginApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        DexUtil.loadDex(getDexFile(), this);
+        File file = getDexFile();
+        if (file != null) {
+            DexUtil.loadDex(file, this);
+        }
+
     }
 
     /**
