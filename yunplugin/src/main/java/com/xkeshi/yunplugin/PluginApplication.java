@@ -3,6 +3,7 @@ package com.xkeshi.yunplugin;
 import android.app.Application;
 
 import java.io.File;
+import java.util.ArrayList;
 
 /**
  * 插件化application
@@ -14,9 +15,15 @@ public abstract class PluginApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        File file = getDexFile();
-        if (file != null) {
-            DexUtil.loadDex(file, this);
+        ArrayList<File> files = getDexFiles();
+        if (files != null) {
+            for (File file : files)
+                DexUtil.loadDex(file, this);
+        }
+        ArrayList<File> apks = getApkFiles();
+        if (apks != null) {
+            for (File file : apks)
+                DexUtil.loadApk(file, this);
         }
 
     }
@@ -26,5 +33,12 @@ public abstract class PluginApplication extends Application {
      *
      * @return
      */
-    public abstract File getDexFile();
+    public abstract ArrayList<File> getDexFiles();
+
+    /**
+     * 获取apk文件
+     *
+     * @return
+     */
+    public abstract ArrayList<File> getApkFiles();
 }

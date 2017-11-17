@@ -35,6 +35,26 @@ public class DexUtil {
         doDexInject(classLoader, context);
     }
 
+    /**
+     * 加载apk
+     *
+     * @param file
+     * @param context
+     */
+    public static void loadApk(File file, Context context) {
+        String optimizeDir = context.getDir("odex", Context.MODE_PRIVATE).getAbsolutePath() + File.separator + "opt_dex";
+        File fopt = new File(optimizeDir);
+        String targetFile = context.getDir("odex", Context.MODE_PRIVATE).getAbsolutePath() + File.separator
+                + "temp.apk";
+        FileUtil.copyFile(file.getPath(), targetFile);
+        boolean isMake = false;
+        if (!fopt.exists()) {
+            isMake = fopt.mkdir();
+        }
+        DexClassLoader classLoader = new DexClassLoader(file.getAbsolutePath(), fopt.getAbsolutePath(), null,
+                context.getClassLoader().getParent());
+        doDexInject(classLoader, context);
+    }
 
     /**
      * 替换classLoader
@@ -65,7 +85,7 @@ public class DexUtil {
      * @throws IllegalArgumentException
      * @throws IllegalAccessException
      */
-    private static void setField(Object obj, Class<?> cl, String field, Object value)
+    public static void setField(Object obj, Class<?> cl, String field, Object value)
             throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
 
         Field localField = cl.getDeclaredField(field);
