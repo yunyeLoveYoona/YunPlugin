@@ -13,6 +13,7 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.annotation.Nullable;
 import android.view.ContextThemeWrapper;
 import android.view.View;
 
@@ -26,10 +27,10 @@ import java.lang.reflect.Method;
  * Created by dell on 2016/8/1.
  */
 public class RemoteActivity<T extends Activity> extends Activity {
-    private T remote;
-    private Resources mResources;
-    private AssetManager mAssetManager;
-    private Resources.Theme mTheme;
+    protected T remote;
+    protected Resources mResources;
+    protected AssetManager mAssetManager;
+    protected Resources.Theme mTheme;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +48,7 @@ public class RemoteActivity<T extends Activity> extends Activity {
             remote.setIntent(getIntent());
             createRemote(savedInstanceState);
             setContentView(getRootView(remote));
+            setParent();
         }
     }
 
@@ -60,7 +62,30 @@ public class RemoteActivity<T extends Activity> extends Activity {
         return mAssetManager == null ? super.getAssets() : mAssetManager;
     }
 
-    private void createRemote(Bundle bundle) {
+
+    @Override
+    public void startActivityForResult(Intent intent, int requestCode, @Nullable Bundle options) {
+        Intent temp = null;
+        if (this instanceof RemoteTransitActivity) {
+            temp = new Intent(this, RemoteActivity.class);
+        } else {
+            temp = new Intent(this, RemoteTransitActivity.class);
+        }
+        try {
+            DexUtil.setField(temp, Intent.class, "mExtras", intent.getExtras());
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        temp.putExtra("dexPath", getIntent().getStringExtra("dexPath"));
+        temp.putExtra("theme", getIntent().getIntExtra("theme", 0));
+        temp.putExtra("remote", intent.getComponent().getClassName());
+
+        super.startActivityForResult(temp, requestCode, options);
+    }
+
+    protected void createRemote(Bundle bundle) {
         Class thisClass = null;
         if (bundle == null) {
             bundle = new Bundle();
@@ -83,7 +108,7 @@ public class RemoteActivity<T extends Activity> extends Activity {
         }
     }
 
-    private void attachRemote() {
+    protected void attachRemote() {
         Class thisClass = null;
         try {
             thisClass = Class.forName("android.app.Activity");
@@ -220,7 +245,7 @@ public class RemoteActivity<T extends Activity> extends Activity {
         return method;
     }
 
-    private static View getRootView(Activity context) {
+    protected static View getRootView(Activity context) {
         return context.getWindow().getDecorView();
     }
 
@@ -248,7 +273,7 @@ public class RemoteActivity<T extends Activity> extends Activity {
         super.onDestroy();
     }
 
-    private String getLaunchTargetActivity(String dexPath) {
+    protected String getLaunchTargetActivity(String dexPath) {
         @SuppressLint("WrongConstant") PackageInfo packageInfo = getPackageManager().getPackageArchiveInfo(
                 dexPath, 1);
         if ((packageInfo.activities != null)
@@ -263,7 +288,7 @@ public class RemoteActivity<T extends Activity> extends Activity {
      *
      * @param mDexPath
      */
-    private void loadResources(String mDexPath) {
+    protected void loadResources(String mDexPath) {
         try {
             AssetManager assetManager = AssetManager.class.newInstance();
             Method addAssetPath = assetManager.getClass().getMethod("addAssetPath", String.class);
@@ -281,7 +306,7 @@ public class RemoteActivity<T extends Activity> extends Activity {
     /**
      * 设置目标activity的resources
      */
-    private void setResources() {
+    protected void setResources() {
         try {
             DexUtil.setField(remote, ContextThemeWrapper.class, "mResources", mResources);
         } catch (NoSuchFieldException e) {
@@ -289,9 +314,27 @@ public class RemoteActivity<T extends Activity> extends Activity {
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
-
     }
 
+    /**
+     * 设置为父Activity
+     */
+    protected void setParent() {
+        try {
+            DexUtil.setField(remote, Activity.class, "mParent", this);
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+    }
 
     protected T getActivity() {
         return remote;

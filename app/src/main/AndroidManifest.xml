@@ -20,7 +20,9 @@
         <activity android:name="com.xkeshi.yunplugin.activity.RemoteActivity">
 
         </activity>
+        <activity android:name="com.xkeshi.yunplugin.activity.RemoteTransitActivity">
 
+        </activity>
     </application>
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />

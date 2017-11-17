@@ -93,5 +93,11 @@ public class DexUtil {
         localField.set(obj, value);
     }
 
+    public static void setMethod(Object obj, Class<?> cl, String field, Object value)
+            throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
 
+        Field localField = cl.getDeclaredField(field);
+        localField.setAccessible(true);
+        localField.set(obj, value);
+    }
 }
